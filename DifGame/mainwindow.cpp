@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QDebug>
+#include <QVector3D>
+
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -48,6 +50,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
         digits.push_back(1);
 
+
+
     //  MainCalculationsAlghoritmSecond
 
 // создаем списки из классов атакующих, обороняющихся и пунктов защиты
@@ -68,12 +72,20 @@ struct param // для 2 игрока
 
 param Param;
 
+QVector3D Roadblock2;
+Roadblock2.setX(111);
+Roadblock2.setY(222);
+Roadblock2.setZ(333);
+qDebug()<<Roadblock2;
+
+
 
 // public Permutations(int digitCount, int offset = 1)
 int offset = 1;
 //QVector <int> digits;// = Число пунктов защиты
 for (int index = 0; index < digits.count(); index++)
      digits[index] = index + offset;
+
 
 
 //std::list<int> row;
@@ -95,9 +107,11 @@ foreach (int row, GeneratePermutation().toStdList()) {  // to list ??
 }
 QList<int> MainWindow::GeneratePermutation()
 {
-directions = new eDirection[digits.length()]();
+directions = (new eDirection[digits.length()]());
 for (int index = 0; index < digits.length(); index++)
-directions[index] = eDirection::left;
+directions[index] = left;
+
+
 qSort(digits);
 
 return digits.toList();
@@ -127,10 +141,11 @@ mobileIndex = -1;
 
 for (int index = 0; index < digits.length(); index++)
 {
-if ((index == 0) && (dir[index] == eDirection::left))
+if ((index == 0) && (dir[index] == right))
 continue;
 
-if ((index == (digits.length() - 1)) && (dir[index] == eDirection::right))
+
+if ((index == (digits.length() - 1)) && (dir[index] == right))
 break;
 
 if (digits[index + (int)dir[index]] < digits[index])

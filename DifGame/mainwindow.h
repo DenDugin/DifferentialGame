@@ -27,6 +27,7 @@ public:
 
     QVector <int> digits;
     eDirection *directions;
+    eDirection *d;
     QList<int> GeneratePermutation();
 
 
