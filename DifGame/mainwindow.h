@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QVector3D>
 #include "pl2.h"
 
 namespace Ui {
@@ -15,8 +16,27 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     Pl2 * player2;
+    QVector3D pl1;
+    QVector3D pl1_end;
+    QVector3D pl2;
+    QVector3D def;
+    QVector3D zero;
+    double Epsilon;
+    double Acceleration;
+    double Acceleration2;
+    double EngineLife;
+
+    QList <QVector3D> track;
     ~MainWindow();
     void Solver();
+    QVector3D MoveForDefenderToAttaker(QVector3D &defender,QVector3D &atack,double gameTimeStep,double gameTime);
+
+    QVector3D MoveOnMaxRangeForDirection(QVector3D &point, double speed);
+
+    double DistanceToPoint(QVector3D &point);
+
+    void AddPointToTrack(QVector3D &newPoint);
+
     enum eDirection
     {
         left = -1,
@@ -30,6 +50,8 @@ public:
     eDirection *d;
     QList<int> GeneratePermutation();
 
+    double Solver_Kj();
+    double  TimeDiscretizationStep();
 
 private:
     Ui::MainWindow *ui;

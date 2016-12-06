@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 #include <QDebug>
 #include <QVector3D>
+#include <qmath.h>
 
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -13,14 +14,18 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->menu_2,SIGNAL(aboutToShow()),this,SLOT(PL()));
 
 
-// для 1 игрока
-    // начальная точка первого игрока
+    // для 1 игрока
+    // начальная точка первого игрока - Атакующего
     double x = 0;//ui->textBoxXAttacker->text().toDouble();
     double y =0;// ui->textBoxYAttacker->text().toDouble();
     double z = 0;//ui->textBoxZAttacker->text().toDouble();
+    pl1 = {0,0,0};
+
     double InitialVelocity = 10;//ui->textBoxAttackerSpeed->text().toDouble();
-    double Acceleration = 2;//ui->textBoxAttackerBoost->text().toDouble();
-    double EngineLife = 40;//ui->textBoxAttackerMaxTime->text().toDouble();
+    Acceleration = 2;//ui->textBoxAttackerBoost->text().toDouble();
+    EngineLife = 40;//ui->textBoxAttackerMaxTime->text().toDouble();
+
+    pl1_end = {30,0,0};
 
     // конечная точка первого игрока
     double xx = 30;//ui->textBoxXProtect->text().toDouble();
@@ -28,46 +33,93 @@ MainWindow::MainWindow(QWidget *parent) :
     double zz = 0;//ui->textBoxZProtect->text().toDouble();
     double TypeMovObj = ui->textBoxFeatureBetaK->text().toDouble();
     //double bk = ui->textBoxFeatureBk->text().toDouble();
+     Epsilon = 1.0;
 
-    double Epsilon = 1;
 
-
-    //  для 2 игрока
-        double x2 = 0; // usless
-        double y2 = 0; // usless
-        double z2 = 0; // usless
-        double InitialVelocity2=10;
-        double Acceleration2=2;
-        double EngineLife2 = 99999; // usless
-        double Roadblock = 5;
-        double A = 1;
+    //  для 2 игрока  - Защищающиеся игроки
+     double x2 = 0; // usless
+     double y2 = 0; // usless
+     double z2 = 0; // usless
+     double InitialVelocity2=10;
+     Acceleration2=2;
+     double EngineLife2 = INT_MAX;//99999; // usless
+     double Roadblock = 5;
+     double A = 1;
 
 
      // пункты защиты
-        double x3 = 0;
-        double y3 = 30;
-        double z3 = 0;
+     double x3 = 0;
+     double y3 = 30;
+     double z3 = 0;
 
-        digits.push_back(1);
+     def = {0,30,0};
+
+     digits.push_back(1);
+
+     // start
+
+     double timeDiscretization =  TimeDiscretizationStep();
+
+     for (int v=1; v * timeDiscretization <= EngineLife; v++)
+     {
+     QVector3D point;
+     point.isNull();
+     double lambda1 = INT_MAX;
+     double lambda2 = INT_MAX;
+
+     MoveForDefenderToAttaker(def,pl1,timeDiscretization,v*timeDiscretization);
+     AddPointToTrack(def);
+
+     // в этом алгоритме мы просто смотрим нет ли рядом оборонителя
+
+
+     }
 
 
 
-    //  MainCalculationsAlghoritmSecond
-
-// создаем списки из классов атакующих, обороняющихся и пунктов защиты
-
+//  MainCalculationsAlghoritmSecond
+//  создаем списки из классов атакующих, обороняющихся и пунктов защиты
 //  var game = new GameMovableObjects<MovableDefenderPlayer>(inputData);
+}
 
+QVector3D MainWindow::MoveForDefenderToAttaker(QVector3D &defender, QVector3D &atack, double gameTimeStep, double gameTime)
+{
+double rangeCanMove = Acceleration2 * gameTimeStep * gameTimeStep / 2.0;
 
+if (atack.distanceToPoint(defender) < 0.1)  return atack;
+
+return MoveOnMaxRangeForDirection(atack,rangeCanMove);
 
 }
+
+QVector3D MainWindow::MoveOnMaxRangeForDirection(QVector3D &point, double speed)
+{
+    double dist = speed / DistanceToPoint(point);
+    zero.setX((zero.x() - point.x()) * dist); // ?? zero ??
+    zero.setY((zero.y() - point.y()) * dist);
+    zero.setZ((zero.z() - point.z()) * dist);
+    return point;
+}
+
+
+double MainWindow::DistanceToPoint(QVector3D &point)
+{
+ return sqrt(pow(zero.x() - point.x(), 2.0) + pow(zero.y() - point.y(), 2.0) + pow(zero.z() - point.z(), 2.0));
+}
+
+
+void MainWindow::AddPointToTrack(QVector3D &newPoint)
+{
+track.push_back(newPoint);
+}
+
 
 void MainWindow::Solver()
 {
 struct param // для 2 игрока
 {
- int N; // количество единиц защиты игрока 2
- int Q; // Определяет количество позиций куда игрока 2 может разместить свои посты защиты
+ int N = 1; // количество единиц защиты игрока 2
+ int Q = 1; // Определяет количество позиций куда игрока 2 может разместить свои посты защиты
 };
 
 param Param;
@@ -88,9 +140,6 @@ for (int index = 0; index < digits.count(); index++)
 
 
 
-//std::list<int> row;
-
-
 foreach (int row, GeneratePermutation().toStdList()) {  // to list ??
     int tempObjectPlayer2 = 0;
     for (int i = 0; i < GeneratePermutation().size(); i++) // row.size??
@@ -101,6 +150,8 @@ foreach (int row, GeneratePermutation().toStdList()) {  // to list ??
     }
 
 }
+
+
 
  // GeneratePermutation();
 
@@ -131,6 +182,8 @@ ChangeDirectionOfLargerThanMobileInteger(directions, mobileValue);
 
 
 }
+
+
 
 
 bool MainWindow::HasMobileInteger(eDirection *dir, int mobileIndex)
@@ -185,6 +238,49 @@ for (int index = 0; index < digits.length(); index++)
     if (digits[index] > mobileValue)
         dir[index] = (eDirection)(0 - (int)dir[index]);
 }
+}
+
+double MainWindow::Solver_Kj()
+{
+ QList<double> Kj;
+
+ /// ....
+
+double timeDiscretization =  TimeDiscretizationStep();
+
+for (int v=1; v * timeDiscretization <= EngineLife; v++)
+{
+QVector3D point;
+point.isNull();
+double lambda1 = INT_MAX;
+double lambda2 = INT_MAX;
+
+// передвинуть защищающегося игролка к атакующему
+// <returns>точка куда передвинули защищаемого игрока</returns>
+//foreach (var, container) {
+//...
+
+
+
+}
+
+
+}
+
+double MainWindow::TimeDiscretizationStep()
+{
+
+ //=2.0*epsilos / (ускорение защищ
+
+
+double res = sqrt(2.0*Epsilon/(2));
+
+return res;
+// return Math.Sqrt(2.0 * Param.AccuracyTrajectory /
+//                   (Param.PointOfAttack.Select(z => z.Acceleration)
+//                   .Concat(Param.PointOfDefender.Select(e => e.Acceleration))
+//                   .Max()));
+
 }
 
 
